@@ -2,11 +2,10 @@ package com.del.compliancetracker.controller;
 
 import com.del.compliancetracker.model.ComplianceItem;
 import com.del.compliancetracker.service.ComplianceService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
-import java.time.LocalDate;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/compliance")
@@ -14,46 +13,51 @@ public class ComplianceController {
 
     private final ComplianceService complianceService;
 
-    // Constructor Injection (recommended way)
     public ComplianceController(ComplianceService complianceService) {
         this.complianceService = complianceService;
     }
 
-    // ✅ Create new compliance item
-    @PostMapping
-    public ComplianceItem create(@RequestBody ComplianceItem item) {
-        item.setCreatedAt(LocalDateTime.now());
-        return complianceService.create(item);
-    }
-
-    // ✅ Get all compliance items
+    // Get all items
     @GetMapping
-    public List<ComplianceItem> getAll() {
-        return complianceService.getAll();
+    public ResponseEntity<List<ComplianceItem>> getAllItems() {
+        return ResponseEntity.ok(complianceService.getAll());
     }
 
-    // ✅ Get compliance item by ID
+    // Get item by ID
     @GetMapping("/{id}")
-    public Optional<ComplianceItem> getById(@PathVariable Long id) {
-        return complianceService.getById(id);
+    public ResponseEntity<ComplianceItem> getItemById(@PathVariable Long id) {
+        return complianceService.getById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // ✅ Update compliance item
+    // Create new item
+    @PostMapping
+    public ResponseEntity<ComplianceItem> createItem(@RequestBody ComplianceItem item) {
+        // No need to manually set createdAt
+        ComplianceItem savedItem = complianceService.save(item);
+        return ResponseEntity.ok(savedItem);
+    }
+
+    // Update item
     @PutMapping("/{id}")
-    public ComplianceItem update(@PathVariable Long id,
-                                 @RequestBody ComplianceItem item) {
-        return complianceService.update(id, item);
+    public ResponseEntity<ComplianceItem> updateItem(@PathVariable Long id, @RequestBody ComplianceItem updatedItem) {
+        return complianceService.getById(id)
+                .map(existingItem -> {
+                    existingItem.setTitle(updatedItem.getTitle());
+                    existingItem.setDescription(updatedItem.getDescription());
+                    existingItem.setStatus(updatedItem.getStatus());
+                    existingItem.setDueDate(updatedItem.getDueDate());
+                    ComplianceItem savedItem = complianceService.save(existingItem);
+                    return ResponseEntity.ok(savedItem);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // ✅ Delete compliance item
+    // Delete item
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        complianceService.delete(id);
-    }
-
-    // ✅ Filter by status
-    @GetMapping("/status/{status}")
-    public List<ComplianceItem> getByStatus(@PathVariable String status) {
-        return complianceService.getByStatus(status);
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+        complianceService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
