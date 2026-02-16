@@ -1,0 +1,29 @@
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: compliance-postgres
+    environment:
+      POSTGRES_DB: compliance_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 012345
+    ports:
+      - "7000:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: compliance-app
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/compliance_tracker
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 012345
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+volumes:
+  postgres_data:
