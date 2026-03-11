@@ -2,7 +2,9 @@ package com.del.compliancetracker.controller;
 
 import com.del.compliancetracker.model.ComplianceItem;
 import com.del.compliancetracker.service.ComplianceService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,51 +15,45 @@ public class ComplianceController {
 
     private final ComplianceService complianceService;
 
+    @Autowired
     public ComplianceController(ComplianceService complianceService) {
         this.complianceService = complianceService;
     }
 
-    // Get all items
+    // GET all items
     @GetMapping
-    public ResponseEntity<List<ComplianceItem>> getAllItems() {
-        return ResponseEntity.ok(complianceService.getAll());
+    public List<ComplianceItem> getAllItems() {
+        return complianceService.getAll();
     }
 
-    // Get item by ID
+    // GET single item by ID
     @GetMapping("/{id}")
-    public ResponseEntity<ComplianceItem> getItemById(@PathVariable Long id) {
-        return complianceService.getById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ComplianceItem getItemById(@PathVariable Long id) {
+        return complianceService.getById(id);
     }
 
-    // Create new item
+    // GET paginated items
+    @GetMapping("/pageable")
+    public Page<ComplianceItem> getItemsPageable(Pageable pageable) {
+        return complianceService.getAll(pageable);
+    }
+
+    // POST create new item
     @PostMapping
-    public ResponseEntity<ComplianceItem> createItem(@RequestBody ComplianceItem item) {
-        // No need to manually set createdAt
-        ComplianceItem savedItem = complianceService.save(item);
-        return ResponseEntity.ok(savedItem);
+    public ComplianceItem createItem(@RequestBody ComplianceItem item) {
+        return complianceService.save(item);
     }
 
-    // Update item
+    // PUT update existing item
     @PutMapping("/{id}")
-    public ResponseEntity<ComplianceItem> updateItem(@PathVariable Long id, @RequestBody ComplianceItem updatedItem) {
-        return complianceService.getById(id)
-                .map(existingItem -> {
-                    existingItem.setTitle(updatedItem.getTitle());
-                    existingItem.setDescription(updatedItem.getDescription());
-                    existingItem.setStatus(updatedItem.getStatus());
-                    existingItem.setDueDate(updatedItem.getDueDate());
-                    ComplianceItem savedItem = complianceService.save(existingItem);
-                    return ResponseEntity.ok(savedItem);
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ComplianceItem updateItem(@PathVariable Long id, @RequestBody ComplianceItem item) {
+        return complianceService.update(id, item);
     }
 
-    // Delete item
+    // DELETE item by ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+    public String deleteItem(@PathVariable Long id) {
         complianceService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return "Item deleted successfully";
     }
 }
