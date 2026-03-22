@@ -2,6 +2,7 @@ package com.del.compliancetracker.controller;
 
 import com.del.compliancetracker.model.ComplianceItem;
 import com.del.compliancetracker.service.ComplianceService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,13 +41,13 @@ public class ComplianceController {
 
     // POST create new item
     @PostMapping
-    public ComplianceItem createItem(@RequestBody ComplianceItem item) {
+    public ComplianceItem createItem(@Valid @RequestBody ComplianceItem item) {
         return complianceService.save(item);
     }
 
     // PUT update existing item
     @PutMapping("/{id}")
-    public ComplianceItem updateItem(@PathVariable Long id, @RequestBody ComplianceItem item) {
+    public ComplianceItem updateItem(@PathVariable Long id,@Valid @RequestBody ComplianceItem item) {
         return complianceService.update(id, item);
     }
 

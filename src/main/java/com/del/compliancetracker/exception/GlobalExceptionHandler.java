@@ -1,5 +1,6 @@
 package com.del.compliancetracker.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,7 +16,7 @@ public class GlobalExceptionHandler {
 
     // Existing validation handler
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<String> handleValidationErrors(MethodArgumentNotValidException ex) {
         String errorMsg = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -23,15 +24,21 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("Validation error");
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Validation Error");
-        body.put("message", errorMsg);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
     }
 
+
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
+        String errorMsg = ex.getConstraintViolations()
+                .stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .findFirst()
+                .orElse("Validation error");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
+    }
     // Specific resource not found
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(ResourceNotFoundException ex) {
@@ -57,7 +64,7 @@ public class GlobalExceptionHandler {
     }
 
 
-    public class ResourceNotFoundException extends RuntimeException {
+    public static class ResourceNotFoundException extends RuntimeException {
         public ResourceNotFoundException(String message) {
             super(message);
         }
